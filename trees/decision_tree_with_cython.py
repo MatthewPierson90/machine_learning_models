@@ -10,8 +10,8 @@ class tree_node(object):
     def __init__(self,
                  stop_depth: int = 5,
                  current_depth: int = 0,
-                 x_data: type(pd.DataFrame) = pd.DataFrame(),
-                 y_data:np.ndarray = np.array([]),
+                 x_data: type(pd.DataFrame) = None,
+                 y_data: np.ndarray = None,
                  min_points_in_split: int = 1,
                  tree_type: str = 'classification',
                  classification_impurity: str ='gini_index',
@@ -21,14 +21,16 @@ class tree_node(object):
                  use_random_features: bool = False,
                  num_random_features: int = 0,
                  name: str = '',
-                 node_dict: dict = {1:1})->None:
+                 node_dict: dict = {1:1}
+                 )->None:
         """
         Makes a new tree node, automatically builds a tree if data is passed as an input.
         The name and node_dict are stored to get a picture of the tree easily.
+        -------------------------------
         stop_depth: int = 5,
         current_depth: int = 0,
-        x_data: type(pd.DataFrame) = pd.DataFrame(),
-        y_data:np.ndarray = np.array([]),
+        x_data: type(pd.DataFrame) = None,
+        y_data:np.ndarray = None,
         min_points_in_split: int = 1,
         tree_type: str = 'classification',
         classification_impurity: str ='gini_index',
@@ -49,7 +51,7 @@ class tree_node(object):
         self.is_leaf = False
         self.current_depth = current_depth
         self.stop_depth = stop_depth
-        if len(x_data) != 0:
+        if x_data is not None:
             self.train(x_data=x_data,
                        y_data=y_data,
                        min_points_in_split=min_points_in_split,
@@ -138,7 +140,6 @@ class tree_node(object):
             if was_reduction:
                 self.split_on = min_feature_split
                 self.split_at = feature_dict[min_feature_split]['split_value']
-                # print(f'split on: {self.split_on} \nsplit at: {self.split_at}')
                 x_data_0 = x_data[x_data[min_feature_split] <= self.split_at]
                 y_data_0 = y_data[x_data[min_feature_split] <= self.split_at]
                 x_data_1 = x_data[x_data[min_feature_split] > self.split_at]
@@ -228,6 +229,7 @@ class tree_node(object):
                       )->np.ndarray:
         """
         Evaluates a data frame of examples
+
         Parameters
         ----------
         df: pd.DataFrame
@@ -425,41 +427,30 @@ def find_classification_split(x_data: type(pd.DataFrame()),
         max_phat_y_value_2 = classes[0]
         max_phat_2 = 0
         for index, value in enumerate(feature_data):
-            # print(f'index: {index}, value: {value}')
             if index+1 < min_points_in_split or len(feature_data)-index-1 < min_points_in_split:
-                # print('Not enough points \n')
                 continue
             elif index != len(feature_data)-1:
                 if feature_data[index+1] == value:
-                    # print('was duplicate \n')
                     continue
                 else:
-                    # print(f'  index: {index}, value: {value}')
                     impurity_1, y_class_1, phat_1 = impurity_func(feat_y_subset=feat_y[:index+1],
                                                                   y_classes=classes)
                     impurity_2, y_class_2, phat_2 = impurity_func(feat_y_subset=feat_y[index+1:],
                                                                   y_classes=classes)
                     impurity = impurity_2 + impurity_1
-                    # impurity = impurity_2
-                    # print(f'{use_impurity}: {impurity} \n')
                     if impurity < min_impurity:
                         min_impurity = impurity
                         min_feature_value_split = (value+feature_data[index+1])/2
-                        # max_phat_y_value_1 = y_class_1
-                        # max_phat_1 = phat_1
                         max_phat_y_value_2 = y_class_2
                         max_phat_2 = phat_2
         feature_dict[feature]['gini_index'] = min_impurity
         feature_dict[feature]['split_value'] = min_feature_value_split
-        # feature_dict[feature]['classification_1'] = max_phat_y_value_1
-        # feature_dict[feature]['classification_phat_1'] = max_phat_1
         feature_dict[feature]['classification_2'] = max_phat_y_value_2
         feature_dict[feature]['classification_phat_2'] = max_phat_2
         if min_impurity < global_min_impurity:
             was_reduction = True
             global_min_impurity = min_impurity
             min_feature_split = feature
-        # print('impurity:',min_impurity)
     return was_reduction, min_feature_split, global_min_impurity, feature_dict
 
 

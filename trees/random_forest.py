@@ -119,7 +119,6 @@ class random_forest:
         results = []
         df1 = df.copy()
         for tree in self.trees:
-            # print(len(df1))
             results.append(tree.evaluate_many(df1))
         ar = np.array(results)
         N = ar.shape[1]

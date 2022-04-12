@@ -9,7 +9,7 @@ class tree_node(object):
     def __init__(self,
                  stop_depth: int = 5,
                  current_depth: int = 0,
-                 x_data: type(pd.DataFrame) = pd.DataFrame(),
+                 x_data: "pd.DataFrame" = pd.DataFrame(),
                  y_data:np.ndarray = np.array([]),
                  min_points_in_split: int = 1,
                  tree_type: str = 'classification',
@@ -107,20 +107,20 @@ class tree_node(object):
         if self.current_depth == self.stop_depth or len(y_data)/2 < min_points_in_split or len(set(y_data)) == 1:
             self.is_leaf = True
             if tree_type.lower() == 'classification':
-                if len(set(y_data))==0:
+                if len(np.unique(y_data))==0:
                     self.node_value = 1
                 else:
-                    self.node_value = calculate_max_phat(y_data, list(set(y_data)))[0]
+                    self.node_value = calculate_max_phat(y_data, np.unique(y_data))[0]
 
             else:
                 self.node_value = y_data.mean()
         else:
             if tree_type == 'classification':
                 was_reduction, min_feature_split, _, feature_dict = find_classification_split(x_data=x_data[self.random_features],
-                                                                               y_data=y_data,
-                                                                               min_points_in_split=min_points_in_split,
-                                                                               use_impurity=classification_impurity,
-                                                                               node_penalty=node_penalty)
+                                                                                              y_data=y_data,
+                                                                                              min_points_in_split=min_points_in_split,
+                                                                                              use_impurity=classification_impurity,
+                                                                                              node_penalty=node_penalty)
 
             else:
                 if is_boosted:
@@ -137,7 +137,6 @@ class tree_node(object):
             if was_reduction:
                 self.split_on = min_feature_split
                 self.split_at = feature_dict[min_feature_split]['split_value']
-                # print(f'split on: {self.split_on} \nsplit at: {self.split_at}')
                 x_data_0 = x_data[x_data[min_feature_split] <= self.split_at]
                 y_data_0 = y_data[x_data[min_feature_split] <= self.split_at]
                 x_data_1 = x_data[x_data[min_feature_split] > self.split_at]
@@ -159,7 +158,7 @@ class tree_node(object):
                                             tree_type=self.tree_type,
                                             classification_impurity=self.classification_impurity,
                                             name=self.name+'1',
-                                            node_dict = self.node_dict)
+                                            node_dict=self.node_dict)
             else:
                 self.is_leaf = True
                 if tree_type.lower() == 'classification':
@@ -183,15 +182,14 @@ class tree_node(object):
             if self.is_leaf:
                 return self.node_value
             else:
-                if type(single_x_data) == type(np.array(1)) or type(single_x_data) == type([]):
+                if type(single_x_data) == np.ndarray or type(single_x_data) == list:
                     single_x_data = np.array(single_x_data)
                     if single_x_data.shape == (len(self.features),):
                         x_data = pd.DataFrame([single_x_data], columns = self.features)
                     elif single_x_data.shape == (1,len(self.features)):
                         x_data = pd.DataFrame(single_x_data, columns=self.features)
                     else:
-                        print('incorrect data shape')
-                        raise TypeError
+                        raise TypeError('incorrect data shape')
                 elif type(single_x_data) == type(pd.DataFrame()):
                     x_data = single_x_data
                 else:
@@ -278,8 +276,6 @@ def find_regression_split(x_data: type(pd.DataFrame()),
     min_feature_split = features[0]
     was_reduction = False
     for feature in features:
-        # print('\n')
-        # print(feature)
         feature_data = x_data[feature]
         feature_data = feature_data.to_numpy().copy()
         feat_y = y_data.copy()[feature_data.argsort()]
@@ -291,14 +287,12 @@ def find_regression_split(x_data: type(pd.DataFrame()),
         num_duplicate = 1
         previous_value = None
         for index, value in enumerate(feature_data):
-            # print(f'index: {index}')
             if index+1 < min_points_in_split or len(feature_data)-index-1 < min_points_in_split:
-                # print('Not enough points \n')
                 continue
             elif index != len(feature_data) - 1:
                 if feature_data[index + 1] == value:
                     num_duplicate += 1
-                    # print('was duplicate \n')
+
                 else:
                     if len(avg_1) == 0:
                         avg_1[value] = feat_y[:index+1].mean()
@@ -307,23 +301,19 @@ def find_regression_split(x_data: type(pd.DataFrame()),
                         num_in_avg2 = len(feature_data) - num_duplicate
                         previous_value = value
                     else:
-                        avg_1[value] = (num_in_avg1*avg_1[previous_value]+num_duplicate*feat_y[index])/(num_in_avg1+num_duplicate)
-                        avg_2[value] = (num_in_avg2*avg_2[previous_value]-num_duplicate*feat_y[index])/(num_in_avg2-num_duplicate)
+                        avg_1[value] = (num_in_avg1 * avg_1[previous_value] + num_duplicate * feat_y[index]) / (num_in_avg1+num_duplicate)
+                        avg_2[value] = (num_in_avg2 * avg_2[previous_value] - num_duplicate * feat_y[index]) / (num_in_avg2-num_duplicate)
                         num_in_avg1 += num_duplicate
                         num_in_avg2 -= num_duplicate
-                        # print(f'num_dup: {num_duplicate}, num in a1: {num_in_avg1}, num_in_a2: {num_in_avg2}')
                     sum1 = ((feat_y[:index+1]-avg_1[value])**2).sum()
                     sum2 = ((feat_y[index+1:]-avg_2[value])**2).sum()
                     error = sum1+sum2
-                    # print(f'error: {error} \n')
                     if error < min_error:
                         min_error = error
                         min_split = (value+feature_data[index+1])/2
                     num_duplicate = 1
         feature_dict[feature]['error'] = min_error
         feature_dict[feature]['split_value'] = min_split
-        # feature_dict[feature]['avg_less'] = avg_1[min_split]
-        # feature_dict[feature]['avg_greater'] = avg_2[min_split]
         if min_error < global_min_error:
             was_reduction = True
             global_min_error = min_error
@@ -457,41 +447,30 @@ def find_classification_split(x_data: type(pd.DataFrame()),
         max_phat_y_value_2 = classes[0]
         max_phat_2 = 0
         for index, value in enumerate(feature_data):
-            # print(f'index: {index}, value: {value}')
             if index+1 < min_points_in_split or len(feature_data)-index-1 < min_points_in_split:
-                # print('Not enough points \n')
                 continue
             elif index != len(feature_data)-1:
                 if feature_data[index+1] == value:
-                    # print('was duplicate \n')
                     continue
                 else:
-                    # print(f'  index: {index}, value: {value}')
                     impurity_1, y_class_1, phat_1 = impurity_func(feat_y_subset=feat_y[:index+1],
                                                                   y_classes=classes)
                     impurity_2, y_class_2, phat_2 = impurity_func(feat_y_subset=feat_y[index+1:],
                                                                   y_classes=classes)
                     impurity = impurity_2 + impurity_1
-                    # impurity = impurity_2
-                    # print(f'{use_impurity}: {impurity} \n')
                     if impurity < min_impurity:
                         min_impurity = impurity
                         min_feature_value_split = (value+feature_data[index+1])/2
-                        # max_phat_y_value_1 = y_class_1
-                        # max_phat_1 = phat_1
                         max_phat_y_value_2 = y_class_2
                         max_phat_2 = phat_2
         feature_dict[feature]['gini_index'] = min_impurity
         feature_dict[feature]['split_value'] = min_feature_value_split
-        # feature_dict[feature]['classification_1'] = max_phat_y_value_1
-        # feature_dict[feature]['classification_phat_1'] = max_phat_1
         feature_dict[feature]['classification_2'] = max_phat_y_value_2
         feature_dict[feature]['classification_phat_2'] = max_phat_2
         if min_impurity < global_min_impurity:
             was_reduction = True
             global_min_impurity = min_impurity
             min_feature_split = feature
-        # print('impurity:',min_impurity)
     return was_reduction, min_feature_split, global_min_impurity, feature_dict
 
 
@@ -597,7 +576,7 @@ def calculate_gini_index(feat_y_subset: np.ndarray,
 
 def calculate_cross_entropy(feat_y_subset: np.ndarray,
                             y_classes: list
-                            )->(float,int,float):
+                            )->(float, int, float):
     """
     calculates the cross entropy of a node.
     Shouldn't be called directly.
@@ -694,14 +673,3 @@ if __name__ == '__main__':
     diff[y_pred-y_test == 0] = 0
     print(f'num wrong: {diff.sum()}/{len(diff)} ({diff.sum()/len(diff)*100:.2f}%)')
 
-
-    #
-    # results = node.evaluate_many(df)['class'].to_numpy()
-    # for node_key in node.node_dict:
-    #     snode = node.node_dict[node_key]
-    #     print(' '*(len(node_key)-1), node_key)
-    #     if not snode.is_leaf:
-    #         print(' '*len(node_key), 'split on', snode.split_on)
-    #         print(' '*len(node_key), 'split at', snode.split_at)
-    #     else:
-    #         print(' '*len(node_key), 'node_value', snode.node_value)
