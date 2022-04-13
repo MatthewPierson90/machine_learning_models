@@ -5,14 +5,11 @@ cimport numpy as np
 
 np.import_array()
 
-
 cdef float new_avg(double old_avg,
                    double new_value,
                    long old_num,
                    long add_remove):
     return (old_num*old_avg+add_remove*new_value)/(old_num+add_remove)
-
-
 
 def find_regression_feature_split(np.ndarray[c.double, ndim=1] x_values,
                                   np.ndarray[c.double, ndim=1] y_values,

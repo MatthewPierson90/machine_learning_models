@@ -192,13 +192,11 @@ class tree_node(object):
                     elif single_x_data.shape == (1,len(self.features)):
                         x_data = pd.DataFrame(single_x_data, columns=self.features)
                     else:
-                        print('incorrect data shape')
-                        raise TypeError
+                        raise TypeError(f'incorrect data shape, expected single_x_data.shape = (1, {len(self.features)})')
                 elif type(single_x_data) == type(pd.DataFrame()):
                     x_data = single_x_data
                 else:
-                    print('incorrect data type, use pandas DataFrame, numpy array, or list')
-                    raise TypeError
+                    raise TypeError('incorrect data type, use pandas DataFrame, numpy array, or list')
                 if (x_data[self.split_on] <= self.split_at).all():
                     return self.new_node_1.evaluate_single(x_data)
                 else:
@@ -618,8 +616,6 @@ def make_bootstrap_data(x_data: type(pd.DataFrame([])),
     new_y = y_data[rand_indices]
     new_x = new_x.reset_index(drop=True)
     return new_x, new_y
-
-
 
 if __name__ == '__main__':
     df1 = pd.DataFrame({'f1':[i for i in range(100)],

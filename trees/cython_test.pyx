@@ -1,6 +1,5 @@
 import cython as c
 
-
 def func1(n: c.int) -> c.long:
     to_return:c.long= 1
     k: c.long = 1

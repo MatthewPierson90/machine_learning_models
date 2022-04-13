@@ -4,7 +4,6 @@ from time import perf_counter
 tt = perf_counter
 from decision_tree import tree_node, make_test_y_values1, make_test_y_values2
 
-
 class random_forest:
     def __init__(self,
                  num_trees: int = 10,

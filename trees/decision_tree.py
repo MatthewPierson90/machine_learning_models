@@ -170,7 +170,6 @@ class tree_node(object):
                 else:
                     self.node_value = y_data.mean()
 
-
     def evaluate_single(self,
                         single_x_data):
         """
@@ -189,12 +188,11 @@ class tree_node(object):
                     elif single_x_data.shape == (1,len(self.features)):
                         x_data = pd.DataFrame(single_x_data, columns=self.features)
                     else:
-                        raise TypeError('incorrect data shape')
+                        raise TypeError(f'incorrect data shape, expected single_x_data.shape = (1,{len(self.features)})')
                 elif type(single_x_data) == type(pd.DataFrame()):
                     x_data = single_x_data
                 else:
-                    print('incorrect data type, use pandas DataFrame, numpy array, or list')
-                    raise TypeError
+                    raise TypeError('incorrect data type, use pandas DataFrame, numpy array, or list')
                 if (x_data[self.split_on] <= self.split_at).all():
                     return self.new_node_1.evaluate_single(x_data)
                 else:
@@ -672,4 +670,3 @@ if __name__ == '__main__':
     diff = np.ones(y_test.shape)
     diff[y_pred-y_test == 0] = 0
     print(f'num wrong: {diff.sum()}/{len(diff)} ({diff.sum()/len(diff)*100:.2f}%)')
-
