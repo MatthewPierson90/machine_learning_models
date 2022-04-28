@@ -64,9 +64,6 @@ class boosted_reg:
                 y_pred = self.evaluate_many(x_data)
                 residuals = y_data-y_pred
                 mse = (residuals**2).sum()/(len(residuals))
-                # print(y_pred)
-                # print(residuals)
-                # print('\n')
             else:
                 tree = tree_node(stop_depth=stop_depth_boosted,
                                  x_data=x_data,
@@ -104,9 +101,6 @@ class boosted_reg:
         return results
 
 
-
-
-
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
     x_vals1 = np.random.rand(5000)*10
@@ -135,11 +129,10 @@ if __name__ == '__main__':
     ax = plt.axes(projection='3d')
     ax.plot_surface(xx1, xx2, yy, rstride=1, cstride=1,
                     cmap='viridis', edgecolor='none')
+
     # x_test_vals = np.linspace(0,10,1000)
     # x_test = pd.DataFrame({'f':x_test_vals})
     # y_test = x_test_vals**2
     # y_pred = boosted.evaluate_many(x_test)
     # plt.plot(x_test, y_pred)
     # print(f'test mse: {((y_pred-y_test)**2).sum()/len(y_test)}')
-
-
